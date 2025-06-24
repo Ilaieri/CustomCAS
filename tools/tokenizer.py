@@ -18,6 +18,6 @@ def tokenize(expression):
         i += 1
     return tokens
 # Example usage:
-print(tokenize("32x+5(2y-4)"))  # Output: ["32", "x", "+", "5", "*", "(", "2", "y", "-", "4", ")"]
+# print(tokenize("32x+5(2y-4)"))  # Output: ["32", "x", "+", "5", "*", "(", "2", "y", "-", "4", ")"]
 
     
