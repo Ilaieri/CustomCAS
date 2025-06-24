@@ -1,4 +1,4 @@
-from nodes import NumberNode, VariableNode, OperatorNode
+from tools.nodes import NumberNode, VariableNode, OperatorNode
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -70,10 +70,4 @@ class Parser:
         # For now, we assume no unary operators like '-' or '+' at the start
         pass
 
-# Example usage:
-# tokens = ["32", "*", "x", "+", "5", "*", "(", "2", "*", "y", "-", "4", ")"]
-# parser = Parser(tokens)
-# expression_tree = parser.parse()
-# print(expression_tree)  # Output: (32 + (5 * (2y - 4)))
-# print(expression_tree.evaluate({"x": 2, "y": 3}))  # Output: 32*2 + 5*(2*3 - 4) = 64 + 5*2 = 64 + 10 = 74
-        
+

@@ -10,6 +10,8 @@ class NumberNode(ExpressionNode):
     
     def evaluate(self,variables=None):
         return self.value
+    def simplify(self):
+        return self
 class VariableNode(ExpressionNode):
     def __init__(self, name):
         self.name = name
@@ -21,6 +23,8 @@ class VariableNode(ExpressionNode):
         if self.name in variables:
             return variables[self.name]
         raise ValueError(f"Variable '{self.name}' not found in the provided variables.")
+    def simplify(self):
+        return self
 class OperatorNode(ExpressionNode):
     def __init__(self, operator, left, right):
         self.operator = operator
@@ -47,4 +51,45 @@ class OperatorNode(ExpressionNode):
             return left_val ** right_val
         else:
             raise ValueError(f"Unknown operator: {self.operator}")
-# print(OperatorNode("+", NumberNode(1), VariableNode("x")))  #Test 
+    def simplify(self):
+        left_simplified=self.left.simplify()
+        right_simplified=self.right.simplify()
+        # Handle cases where both sides are numbers
+        if isinstance(left_simplified, NumberNode) and isinstance(right_simplified, NumberNode):
+            return NumberNode(self.evaluate())
+        # Handle cases where one side is a number and the other is a variable or expression
+        if isinstance(left_simplified, NumberNode) and left_simplified.value == 0 and self.operator in ('+', '-'):
+            return right_simplified
+        if isinstance(right_simplified, NumberNode) and right_simplified.value == 0 and self.operator == '+':
+            return left_simplified
+        if isinstance(left_simplified, NumberNode) and left_simplified.value == 1 and self.operator == '*':
+            return right_simplified
+        if isinstance(right_simplified, NumberNode) and right_simplified.value == 1 and self.operator == '*':
+            return left_simplified
+        if (isinstance(left_simplified, NumberNode) and left_simplified.value == 0 or isinstance(right_simplified, NumberNode) and right_simplified.value == 0) and self.operator == '*':
+            return NumberNode(0)
+        if isinstance(left_simplified, NumberNode) and left_simplified.value == 1 and self.operator == '^':
+            return NumberNode(1)
+        if isinstance(right_simplified, NumberNode) and right_simplified.value == 0 and self.operator == '^':
+            return NumberNode(1)
+        if isinstance(right_simplified, NumberNode) and right_simplified.value == 1 and self.operator == '^':
+            return left_simplified
+        if isinstance(left_simplified,NumberNode) and isinstance(right_simplified,OperatorNode) and (isinstance(right_simplified.left, NumberNode) or isinstance(right_simplified.right,NumberNode)) and right_simplified.operator=="*":
+            # If left is a number and right is a variable witha coefficient we can simplify the coefficient
+            if isinstance(right_simplified.left, NumberNode):
+                return OperatorNode(self.operator, NumberNode(left_simplified.value * right_simplified.left.value), right_simplified.right)
+            elif isinstance(right_simplified.right, NumberNode):
+                return OperatorNode(self.operator, right_simplified.left, NumberNode(left_simplified.value * right_simplified.right.value))
+        if isinstance(right_simplified,NumberNode) and isinstance(left_simplified,OperatorNode) and (isinstance(left_simplified.left, NumberNode) or isinstance(left_simplified.right,NumberNode)) and left_simplified.operator=="*":
+            # If right is a number and left is a variable witha coefficient we can simplify the coefficient
+            if isinstance(left_simplified.left, NumberNode):
+                return OperatorNode(self.operator, NumberNode(left_simplified.left.value * right_simplified.value), left_simplified.right)
+            elif isinstance(left_simplified.right, NumberNode):
+                return OperatorNode(self.operator, left_simplified.left, NumberNode(left_simplified.right.value * right_simplified.value))
+            
+
+        return OperatorNode(self.operator, left_simplified, right_simplified)
+    
+        
+
+# print(OperatorNode("+", NumberNode(1), VariableNode("x")))  #Test
