@@ -22,6 +22,8 @@ class VariableNode(ExpressionNode):
     def evaluate(self, variables={}):
         if self.name in variables:
             return variables[self.name]
+        else:
+            return VariableNode(self.name)
         raise ValueError(f"Variable '{self.name}' not found in the provided variables.")
     def simplify(self):
         return self
@@ -74,19 +76,14 @@ class OperatorNode(ExpressionNode):
             return NumberNode(1)
         if isinstance(right_simplified, NumberNode) and right_simplified.value == 1 and self.operator == '^':
             return left_simplified
-        if isinstance(left_simplified,NumberNode) and isinstance(right_simplified,OperatorNode) and (isinstance(right_simplified.left, NumberNode) or isinstance(right_simplified.right,NumberNode)) and right_simplified.operator=="*":
-            # If left is a number and right is a variable witha coefficient we can simplify the coefficient
-            if isinstance(right_simplified.left, NumberNode):
-                return OperatorNode(self.operator, NumberNode(left_simplified.value * right_simplified.left.value), right_simplified.right)
-            elif isinstance(right_simplified.right, NumberNode):
-                return OperatorNode(self.operator, right_simplified.left, NumberNode(left_simplified.value * right_simplified.right.value))
-        if isinstance(right_simplified,NumberNode) and isinstance(left_simplified,OperatorNode) and (isinstance(left_simplified.left, NumberNode) or isinstance(left_simplified.right,NumberNode)) and left_simplified.operator=="*":
-            # If right is a number and left is a variable witha coefficient we can simplify the coefficient
-            if isinstance(left_simplified.left, NumberNode):
-                return OperatorNode(self.operator, NumberNode(left_simplified.left.value * right_simplified.value), left_simplified.right)
-            elif isinstance(left_simplified.right, NumberNode):
-                return OperatorNode(self.operator, left_simplified.left, NumberNode(left_simplified.right.value * right_simplified.value))
-            
+        # Only combine coefficients for multiplication
+        if self.operator == '*' and isinstance(left_simplified, NumberNode) and isinstance(right_simplified, NumberNode):
+            return NumberNode(left_simplified.value * right_simplified.value)
+        if self.operator == '*' and isinstance(left_simplified, NumberNode) and isinstance(right_simplified, VariableNode):
+            return OperatorNode('*', left_simplified, right_simplified)
+        if self.operator == '*' and isinstance(right_simplified, NumberNode) and isinstance(left_simplified, VariableNode):
+            return OperatorNode('*', right_simplified, left_simplified)
+ 
 
         return OperatorNode(self.operator, left_simplified, right_simplified)
     

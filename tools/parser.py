@@ -31,11 +31,11 @@ class Parser:
             node = OperatorNode(operator, node, right)
         return node
     def parse_factor(self):
-        node= self.parse_primary()
-        while self.current_token() == '^':
+        node = self.parse_primary()
+        if self.current_token() == '^':
             operator = self.current_token()
             self.advance()
-            right = self.parse_primary()
+            right = self.parse_factor()  # recursion for right-associativity
             node = OperatorNode(operator, node, right)
         return node
     def parse_primary(self):

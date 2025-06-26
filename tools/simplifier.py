@@ -1,14 +1,19 @@
 from tools.nodes import NumberNode, VariableNode, OperatorNode
-def rewrite_subtraction(tree):
-    # Rewrite subtraction in the expression tree to addition of negative numbers
+from collections import defaultdict
+def normalize(tree):
     if isinstance(tree, OperatorNode):
         if tree.operator == '-':
-            # Recursively rewrite both sides
-            left = rewrite_subtraction(tree.left)
-            right = rewrite_subtraction(tree.right)
+            # Normalize subtraction by rewriting it as addition of the negative
+            left = normalize(tree.left)
+            right = normalize(tree.right)
             return OperatorNode('+', left, OperatorNode('*', NumberNode(-1), right))
+        elif tree.operator == '/':
+            # Normalize division by rewriting it as multiplication by the power of -1
+            left = normalize(tree.left)
+            right = normalize(tree.right)
+            return OperatorNode('*', left, OperatorNode('^', right, NumberNode(-1)))
         else:
-            return OperatorNode(tree.operator, rewrite_subtraction(tree.left), rewrite_subtraction(tree.right))
+            return OperatorNode(tree.operator, normalize(tree.left), normalize(tree.right))
     elif isinstance(tree, NumberNode) or isinstance(tree, VariableNode):
         return tree
     else:
@@ -32,8 +37,32 @@ def flattened_sum(tree):
         return left_terms + right_terms
     else:
         return [tree]
+def flattened_product(tree):
+    if isinstance(tree, OperatorNode) and tree.operator == '*':
+        left_factors = flattened_product(tree.left)
+        right_factors = flattened_product(tree.right)
+        return left_factors + right_factors
+    else:
+        return [tree]
+
+def extract_coefficient_and_vars(term):
+    term=flattened_product(term)
+    coefficient = 1
+    variables=[]
+    for factor in term:
+        if isinstance(factor, NumberNode):
+            coefficient *= factor.value
+        elif isinstance(factor, VariableNode):
+            variables.append(factor.name)
+        # Add support for x^2 or similar terms in future
+    return coefficient, sorted(variables)
 
 
-def collect_like_terms(tree):
-    # Recursively collect like terms from the expression tree including variables with coefficients
-    pass
+def collect_like_terms(terms):
+    like_terms = defaultdict(float)
+    for term in terms:
+        coefficient, variables = extract_coefficient_and_vars(term)
+        like_terms[tuple(variables)] += coefficient
+    
+    return like_terms
+
