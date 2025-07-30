@@ -1,10 +1,10 @@
 from tools.parser import Parser
 from tools.tokenizer import tokenize
-from tools.simplifier import normalize, flattened_sum,collect_like_terms
+from tools.simplifier import normalize, flattened_sum,collect_like_terms,expand,collect_powers, rebuild_binary_tree
 from tools.print_handler import print_flattened
 def main():
     # Example input
-    expression = "5(x+4)+5(2x+4)"
+    expression = "(x+5)*(x+2)"
     # Tokenize the input
     tokens = tokenize(expression)
     # Parse the tokens into an expression tree
@@ -34,6 +34,7 @@ def main():
 
     # recursively print all terms to account for nested structures
     print(print_flattened(terms))
-    print(collect_like_terms(terms))
+    # print(collect_like_terms(terms))
+    print(collect_powers(rebuild_binary_tree(collect_like_terms(flattened_sum(expand(normalize(expression_tree)).simplify())))).simplify())
 if __name__ == "__main__":
     main()

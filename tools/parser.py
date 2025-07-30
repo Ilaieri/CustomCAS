@@ -1,4 +1,4 @@
-from tools.nodes import NumberNode, VariableNode, OperatorNode
+from tools.nodes import NumberNode, VariableNode, OperatorNode, PowerNode
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -33,10 +33,9 @@ class Parser:
     def parse_factor(self):
         node = self.parse_primary()
         if self.current_token() == '^':
-            operator = self.current_token()
             self.advance()
             right = self.parse_factor()  # recursion for right-associativity
-            node = OperatorNode(operator, node, right)
+            node = PowerNode(node, right)
         return node
     def parse_primary(self):
         token = self.current_token()
