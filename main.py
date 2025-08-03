@@ -3,38 +3,13 @@ from tools.tokenizer import tokenize
 from tools.simplifier import normalize, flattened_sum,collect_like_terms,expand,collect_powers, rebuild_binary_tree
 from tools.print_handler import print_flattened
 def main():
-    # Example input
-    expression = "(x+5)*(x+2)"
-    # Tokenize the input
-    tokens = tokenize(expression)
-    # Parse the tokens into an expression tree
-    parser = Parser(tokens)
+    expression = "5sin(0)+24cos(0)"
+    tokenized_expression = tokenize(expression)
+    print("Tokenized Expression:", tokenized_expression)
+    parser = Parser(tokenized_expression)
     expression_tree = parser.parse()
-    # Print the expression tree
     print("Expression Tree:", expression_tree)
-    # Evaluate the expression tree with a variable
-    variables = {}
-    # try:
-    #     result = expression_tree.evaluate(variables)
-    #     print("Result:", result)
-    # except ValueError as e:
-    #     print("Error:", e)
-    # # Simplify the expression tree
-    # simplified_tree = expression_tree.simplify()
-    # print("Simplified Expression Tree:", simplified_tree)
-    # # Evaluate the simplified expression tree
-    # try:
-    #     simplified_result = simplified_tree.evaluate(variables)
-    #     print("Simplified Result:", simplified_result)
-    # except ValueError as e:
-    #     print("Error:", e)
-    # Collect like terms from the expression tree
-    print(normalize(expression_tree).simplify())
-    terms = flattened_sum(normalize(expression_tree))
+    print("Simplified Expression Tree:", expression_tree.simplify())
 
-    # recursively print all terms to account for nested structures
-    print(print_flattened(terms))
-    # print(collect_like_terms(terms))
-    print(collect_powers(rebuild_binary_tree(collect_like_terms(flattened_sum(expand(normalize(expression_tree)).simplify())))).simplify())
 if __name__ == "__main__":
     main()

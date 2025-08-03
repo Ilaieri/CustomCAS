@@ -1,7 +1,8 @@
 import re
 operators = {"+", "-", "*", "/", "^","(",")"}
+functions = {"sin", "cos", "tan", "log", "exp", "sqrt", "ln"}
 def tokenize(expression):
-    pattern=r"\d+\.?\d*|[a-zA-Z]|\*\*|[+\-*/^()]"
+    pattern=r"(?:sin|cos|tan|log|exp|sqrt|ln)|\d+\.?\d*|[a-zA-Z]+|\*\*|[+\-*/^()]"
     tokens = re.findall(pattern, expression)
     # Account for implied multiplication 
     i=0
@@ -12,7 +13,7 @@ def tokenize(expression):
         elif tokens[i] == ")" and tokens[i+1] not in operators:
             tokens.insert(i+1, "*")
             i += 1
-        elif tokens[i] not in operators and tokens[i+1] == "(":
+        elif tokens[i] not in operators and tokens[i+1] == "(" and tokens[i] not in functions:
             tokens.insert(i+1, "*")
             i += 1
         i += 1

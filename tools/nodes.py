@@ -1,3 +1,4 @@
+import math
 class ExpressionNode:
     def __str__(self):
         return "ExpressionNode"
@@ -12,6 +13,8 @@ class NumberNode(ExpressionNode):
         return self.value
     def simplify(self):
         return self
+    def differentiate(self, variable):
+        return NumberNode(0)
 class VariableNode(ExpressionNode):
     def __init__(self, name):
         self.name = name
@@ -27,6 +30,11 @@ class VariableNode(ExpressionNode):
         raise ValueError(f"Variable '{self.name}' not found in the provided variables.")
     def simplify(self):
         return self
+    def differentiate(self, variable):
+        if self.name == variable:
+            return NumberNode(1)
+        else:
+            return NumberNode(0)
 class OperatorNode(ExpressionNode):
     def __init__(self, operator, left, right):
         self.operator = operator
@@ -89,6 +97,25 @@ class OperatorNode(ExpressionNode):
  
 
         return OperatorNode(self.operator, left_simplified, right_simplified)
+    def differentiate(self, variable):
+        if self.operator=="+":
+            return OperatorNode("+", self.left.differentiate(variable), self.right.differentiate(variable))
+        elif self.operator=="-":
+            return OperatorNode("-", self.left.differentiate(variable), self.right.differentiate(variable))
+        elif self.operator=="*":
+            if isinstance(self.left, NumberNode):
+                return OperatorNode("*", self.left, self.right.differentiate(variable))
+            elif isinstance(self.right, NumberNode):
+                return OperatorNode("*", self.left.differentiate(variable), self.right)
+            else:
+                return OperatorNode("+", OperatorNode("*", self.left, self.right.differentiate(variable)), OperatorNode("*", self.left.differentiate(variable), self.right))
+        elif self.operator=="/":
+            if isinstance(self.left, NumberNode):
+                return OperatorNode("/", self.left, self.right.differentiate(variable))
+            elif isinstance(self.right, NumberNode):
+                return OperatorNode("/", self.left.differentiate(variable), self.right)
+            else:
+                return OperatorNode("/", self.left.differentiate(variable), self.right.differentiate(variable))
 class PowerNode(ExpressionNode):
     def __init__(self, base, exponent):
         self.base = base
@@ -107,4 +134,64 @@ class PowerNode(ExpressionNode):
         exponent_simplified = self.exponent.simplify()
         if isinstance(base_simplified, NumberNode) and isinstance(exponent_simplified, NumberNode):
             return NumberNode(self.evaluate())
+        if isinstance(base_simplified, NumberNode) and base_simplified.value == 0:
+            return NumberNode(0)
+        if isinstance(exponent_simplified, NumberNode) and exponent_simplified.value == 0:
+            return NumberNode(1)
+        if exponent_simplified.value == 1:
+            return base_simplified
         return PowerNode(base_simplified, exponent_simplified)
+    def differentiate(self, variable):
+        if isinstance(self.base, VariableNode) and self.base.name == variable:
+            if isinstance(self.exponent, VariableNode) and self.exponent.name == variable:
+                raise NotImplementedError("Differentiation with respect to a variable exponent is not implemented, will be added when logs are implemented")
+        if isinstance(self.base, VariableNode) and self.base.name == variable:
+            return OperatorNode("*",self.exponent, PowerNode(self.base, OperatorNode("-", self.exponent, NumberNode(1))))
+        if isinstance(self.exponent, NumberNode) and self.exponent.value == 1:
+            return self.base.differentiate(variable)
+        if isinstance(self.exponent, NumberNode) and self.exponent.value == 0:
+            return NumberNode(0)
+class FunctionNode(ExpressionNode):
+    def __init__(self, function_name, argument):
+        self.function_name = function_name
+        self.argument = argument
+
+    def __str__(self):
+        return f"{self.function_name}({self.argument})"
+    def evaluate(self, variables={}):
+        if self.function_name == "sin":
+            return math.sin(self.argument.evaluate(variables))
+        elif self.function_name == "cos":
+            return math.cos(self.argument.evaluate(variables))
+        elif self.function_name == "tan":
+            return math.tan(self.argument.evaluate(variables))
+        elif self.function_name == "log":
+            return math.log(self.argument.evaluate(variables))
+        elif self.function_name == "exp":
+            return math.exp(self.argument.evaluate(variables))
+        elif self.function_name == "sqrt":
+            return math.sqrt(self.argument.evaluate(variables))
+        elif self.function_name == "ln":
+            return math.log(self.argument.evaluate(variables))
+        raise ValueError(f"Unknown function: {self.function_name}")
+    def simplify(self):
+        argument_simplified = self.argument.simplify()
+        if isinstance(argument_simplified, NumberNode):
+            return NumberNode(self.evaluate())
+        return FunctionNode(self.function_name, argument_simplified)
+    def differentiate(self, variable):
+        if self.function_name == "sin":
+            return OperatorNode("*", self.argument.differentiate(variable), FunctionNode("cos", self.argument))
+        elif self.function_name == "cos":
+            return OperatorNode("*", self.argument.differentiate(variable), FunctionNode("sin", self.argument))
+        elif self.function_name == "tan":
+            return OperatorNode("*", self.argument.differentiate(variable), FunctionNode("sec", self.argument))
+        elif self.function_name == "log":
+            return OperatorNode("*", self.argument.differentiate(variable), FunctionNode("1/x", self.argument))
+        elif self.function_name == "exp":
+            return OperatorNode("*", self.argument.differentiate(variable), FunctionNode("exp", self.argument))
+        elif self.function_name == "sqrt":
+            return OperatorNode("*", self.argument.differentiate(variable), FunctionNode("1/(2*sqrt(x))", self.argument))
+        elif self.function_name == "ln":
+            return OperatorNode("*", self.argument.differentiate(variable), FunctionNode("1/x", self.argument))
+        raise ValueError(f"Unknown function: {self.function_name}")

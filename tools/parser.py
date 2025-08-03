@@ -1,4 +1,5 @@
-from tools.nodes import NumberNode, VariableNode, OperatorNode, PowerNode
+from tools.nodes import NumberNode, VariableNode, OperatorNode, PowerNode, FunctionNode
+functions= {"sin", "cos", "tan", "log", "exp", "sqrt"}
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -41,6 +42,8 @@ class Parser:
         token = self.current_token()
         if token is None:
             raise ValueError("Unexpected end of input")
+        if token in functions:
+            return self.parse_function()
         if token.isdigit():
             self.advance()
             return NumberNode(int(token))
@@ -68,5 +71,16 @@ class Parser:
         # This method can be implemented if unary operators are needed
         # For now, we assume no unary operators like '-' or '+' at the start
         pass
+    def parse_function(self):
+        token = self.current_token()
+        self.advance()
+        if self.current_token()!="(":
+            raise ValueError(f"Expected '(' after function {token}")
+        self.advance()
+        argument = self.parse_expression()
+        if self.current_token() != ")":
+            raise ValueError(f"Expected ')' after function argument for {token}")
+        self.advance()
+        return FunctionNode(token, argument)
 
 
