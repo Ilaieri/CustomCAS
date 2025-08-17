@@ -1,4 +1,4 @@
-from tools.nodes import NumberNode, VariableNode, OperatorNode,PowerNode
+from tools.nodes import NumberNode, VariableNode, OperatorNode,PowerNode, FunctionNode, CommandNode
 from collections import defaultdict
 def normalize(tree):
     if isinstance(tree, OperatorNode):
@@ -16,6 +16,12 @@ def normalize(tree):
             return OperatorNode(tree.operator, normalize(tree.left), normalize(tree.right))
     elif isinstance(tree, NumberNode) or isinstance(tree, VariableNode):
         return tree
+    elif isinstance(tree, PowerNode):
+        return PowerNode(normalize(tree.base), normalize(tree.exponent))
+    elif isinstance(tree, FunctionNode):
+        return FunctionNode(tree.function_name, normalize(tree.argument))
+    elif isinstance(tree, CommandNode):
+        return CommandNode(tree.command_name, normalize(tree.argument), tree.extra)
     else:
         raise ValueError("Unsupported node type in expression tree")
 def unwrite_subtraction(tree):

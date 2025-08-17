@@ -2,10 +2,17 @@ import math
 class ExpressionNode:
     def __str__(self):
         return "ExpressionNode"
+    def evaluate(self, variables={}):
+        raise NotImplementedError("This method should be implemented by subclasses.")
+    def simplify(self):
+        return self
+    def differentiate(self, variable):
+        raise NotImplementedError("This method should be implemented by subclasses.")
+    def execute(self, variables={}):
+        return self
 class NumberNode(ExpressionNode):
     def __init__(self, value):
         self.value = value
-
     def __str__(self):
         return str(self.value)
     
@@ -27,7 +34,6 @@ class VariableNode(ExpressionNode):
             return variables[self.name]
         else:
             return VariableNode(self.name)
-        raise ValueError(f"Variable '{self.name}' not found in the provided variables.")
     def simplify(self):
         return self
     def differentiate(self, variable):
@@ -109,13 +115,16 @@ class OperatorNode(ExpressionNode):
                 return OperatorNode("*", self.left.differentiate(variable), self.right)
             else:
                 return OperatorNode("+", OperatorNode("*", self.left, self.right.differentiate(variable)), OperatorNode("*", self.left.differentiate(variable), self.right))
-        elif self.operator=="/":
+        # Wrongly implemented, will be fixed 
+        elif self.operator=="/": 
             if isinstance(self.left, NumberNode):
                 return OperatorNode("/", self.left, self.right.differentiate(variable))
             elif isinstance(self.right, NumberNode):
                 return OperatorNode("/", self.left.differentiate(variable), self.right)
             else:
                 return OperatorNode("/", self.left.differentiate(variable), self.right.differentiate(variable))
+    def execute(self, variables={}):
+        return OperatorNode(self.operator, self.left.execute(variables), self.right.execute(variables))
 class PowerNode(ExpressionNode):
     def __init__(self, base, exponent):
         self.base = base
@@ -151,6 +160,8 @@ class PowerNode(ExpressionNode):
             return self.base.differentiate(variable)
         if isinstance(self.exponent, NumberNode) and self.exponent.value == 0:
             return NumberNode(0)
+    def execute(self, variables={}):
+        return PowerNode(self.base.execute(variables), self.exponent.execute(variables))
 class FunctionNode(ExpressionNode):
     def __init__(self, function_name, argument):
         self.function_name = function_name
@@ -195,3 +206,61 @@ class FunctionNode(ExpressionNode):
         elif self.function_name == "ln":
             return OperatorNode("*", self.argument.differentiate(variable), FunctionNode("1/x", self.argument))
         raise ValueError(f"Unknown function: {self.function_name}")
+    def execute(self, variables={}):
+        return FunctionNode(self.function_name, self.argument.execute(variables))
+class ConstantNode(ExpressionNode):
+    def __init__ (self, constant_name):
+        self.constant_name = constant_name
+    def __str__(self):
+        if self.constant_name == "pi" or self.constant_name == "π":
+            return "π"
+        elif self.constant_name == "phi":
+            return "φ"
+        else:
+            return self.constant_name
+    def evaluate(self, variables={}):
+        if self.constant_name == "pi" or self.constant_name == "π":
+            return math.pi
+        elif self.constant_name == "e":
+            return math.e
+        elif self.constant_name == "phi":
+            return (1 + 5 ** 0.5) / 2
+        raise ValueError(f"Unknown constant: {self.constant_name}")
+    def simplify(self):
+        return self
+    def differentiate(self, variable):
+        return NumberNode(0)
+class CommandNode(ExpressionNode):
+    def __init__(self, command_name, argument, extra=None):
+        self.command_name = command_name
+        self.argument = argument
+        self.extra = extra
+    def __str__(self):
+        if self.extra is not None:
+            return f"{self.command_name}({self.argument}, {self.extra})"
+        return f"{self.command_name}({self.argument})"
+    def execute(self, variables={}):
+        from tools.simplifier import (
+            normalize,
+            flattened_sum,
+            collect_like_terms,
+            expand,
+            collect_powers,
+            rebuild_binary_tree,
+        )
+        cmd = self.command_name
+        if cmd == "simplify":
+            return normalize(self.argument).simplify()
+        if cmd == "expand":
+            return expand(normalize(self.argument)).simplify()
+        if cmd == "collect_like_terms":
+            terms = flattened_sum(normalize(self.argument))
+            grouped = collect_like_terms(terms)
+            tree = rebuild_binary_tree(grouped)
+            return tree.simplify()
+        if cmd == "collect_powers":
+            return collect_powers(normalize(self.argument)).simplify()
+        if cmd == "differentiate":
+            var = self.extra or "x"
+            return normalize(self.argument.differentiate(var)).simplify()
+        raise ValueError(f"Unknown command: {cmd}")

@@ -1,0 +1,18 @@
+# Supported functions with possible aliases
+FUNCTIONS = {
+    "sin": ["sin"],
+    "cos": ["cos"],
+    "tan": ["tan"],
+    "log": ["log"],
+    "
+    "exp": ["exp"],
+    "sqrt": ["sqrt"]
+}
+
+# Supported constants with aliases
+CONSTANTS = {
+    "pi": ["pi", "π"],
+    "e": ["e"],
+    "i": ["i"],
+    "phi": ["phi", "ϕ"]
+}

@@ -1,5 +1,5 @@
-from tools.nodes import NumberNode, VariableNode, OperatorNode, PowerNode, FunctionNode
-functions= {"sin", "cos", "tan", "log", "exp", "sqrt"}
+from tools.nodes import *
+from tools.symbols import CONSTANTS, FUNCTIONS, COMMANDS
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -42,8 +42,12 @@ class Parser:
         token = self.current_token()
         if token is None:
             raise ValueError("Unexpected end of input")
-        if token in functions:
+        if token in CONSTANTS:
+            return self.parse_constant()
+        if token in FUNCTIONS:
             return self.parse_function()
+        if token in COMMANDS:              
+            return self.parse_command()
         if token.isdigit():
             self.advance()
             return NumberNode(int(token))
@@ -82,5 +86,32 @@ class Parser:
             raise ValueError(f"Expected ')' after function argument for {token}")
         self.advance()
         return FunctionNode(token, argument)
+    def parse_constant(self):
+        token = self.current_token()
+        if token in CONSTANTS:
+            self.advance()
+            return ConstantNode(token)
+        raise ValueError(f"Unknown constant: {token}")
+    def parse_command(self):
+        token = self.current_token()
+        if token in COMMANDS:
+            self.advance()
+            if self.current_token() != "(":
+                raise ValueError(f"Expected '(' after command {token}")
+            self.advance()
+            argument = self.parse_expression()
+            extra = None
+            if self.current_token() == ",":
+                self.advance()
+                extra_token = self.current_token()
+                if extra_token is None or not extra_token.isalpha():
+                    raise ValueError("Expected variable name after ',' in command")
+                extra = extra_token
+                self.advance()
+            if self.current_token() != ")":
+                raise ValueError(f"Expected ')' after command argument for {token}")
+            self.advance()
+            return CommandNode(token, argument, extra)
+        raise ValueError(f"Unknown command: {token}")
 
 

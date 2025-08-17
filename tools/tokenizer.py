@@ -1,24 +1,33 @@
 import re
-operators = {"+", "-", "*", "/", "^","(",")"}
-functions = {"sin", "cos", "tan", "log", "exp", "sqrt", "ln"}
+from tools.symbols import FUNCTIONS, CONSTANTS, COMMANDS
+operators = {"+", "-", "*", "/", "^","(",")",","}
+
 def tokenize(expression):
-    pattern=r"(?:sin|cos|tan|log|exp|sqrt|ln)|\d+\.?\d*|[a-zA-Z]+|\*\*|[+\-*/^()]"
+    functions_pattern = r"|".join(FUNCTIONS.keys())
+    constants_pattern = r"|".join(CONSTANTS.keys())
+    commands_pattern = r"|".join(COMMANDS.keys())
+    pattern = r"(?:{})|\d+\.?\d*|[a-zA-Z]+|\*\*|[,+\-*/^()]".format(
+        "|".join([functions_pattern, constants_pattern, commands_pattern])
+    )
     tokens = re.findall(pattern, expression)
-    # Account for implied multiplication 
-    i=0
-    while i<len(tokens)-1:
-        if tokens[i] not in operators and tokens[i+1] not in operators:
+
+    callable_names = set(FUNCTIONS.keys()) | set(COMMANDS.keys())
+
+    i = 0
+    while i < len(tokens) - 1:
+        a = tokens[i]
+        b = tokens[i+1]
+        if a not in operators and b not in operators:
             tokens.insert(i+1, "*")
             i += 1
-        elif tokens[i] == ")" and tokens[i+1] not in operators:
+        elif a == ")" and b not in operators:
             tokens.insert(i+1, "*")
             i += 1
-        elif tokens[i] not in operators and tokens[i+1] == "(" and tokens[i] not in functions:
+        elif (a not in operators or a == ")") and b == "(" and a not in callable_names:
+            # only insert * if the left token is NOT a function/command
             tokens.insert(i+1, "*")
             i += 1
         i += 1
     return tokens
-# Example usage:
-# print(tokenize("32x+5(2y-4)"))  # Output: ["32", "x", "+", "5", "*", "(", "2", "y", "-", "4", ")"]
 
-    
+
