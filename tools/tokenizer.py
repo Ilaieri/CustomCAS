@@ -19,12 +19,11 @@ def tokenize(expression: str) -> List[str]:
     Returns:
         List[str]: A list of tokens.
     """
-    functions_pattern = r"|".join(FUNCTIONS.keys())
-    constants_pattern = r"|".join(CONSTANTS.keys())
-    commands_pattern = r"|".join(COMMANDS.keys())
+    reserved_words = list(FUNCTIONS.keys()) + list(CONSTANTS.keys()) + list(COMMANDS.keys())
+    reserved_words.sort(key=len, reverse=True)
     
     pattern = r"(?:{})|\d+\.?\d*|[a-zA-Z]+|\*\*|[,+\-*/^()]".format(
-        "|".join([functions_pattern, constants_pattern, commands_pattern])
+        "|".join(reserved_words)
     )
     tokens = re.findall(pattern, expression)
 
