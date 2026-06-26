@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "customcas"
+version = "0.1.0"
+description = "A custom computer algebra system"
+readme = "readme.md"
+requires-python = ">=3.8"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.scripts]
+customcas = "main:main"
+
+[tool.setuptools.packages.find]
+include = ["tools*"]

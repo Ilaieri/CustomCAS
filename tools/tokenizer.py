@@ -1,11 +1,28 @@
 import re
-from tools.symbols import FUNCTIONS, CONSTANTS, COMMANDS
-operators = {"+", "-", "*", "/", "^","(",")",","}
+from typing import List, Set
 
-def tokenize(expression):
+from tools.symbols import FUNCTIONS, CONSTANTS, COMMANDS
+
+operators: Set[str] = {"+", "-", "*", "/", "^", "(", ")", ","}
+
+def tokenize(expression: str) -> List[str]:
+    """
+    Tokenizes a mathematical expression into a list of strings representing
+    numbers, variables, operators, and functions.
+
+    It also handles implicit multiplication by inserting '*' between appropriate
+    tokens (e.g., '2x' becomes '2 * x', or '(x+1)(x+2)' becomes '(x+1) * (x+2)').
+
+    Args:
+        expression (str): The mathematical expression to tokenize.
+
+    Returns:
+        List[str]: A list of tokens.
+    """
     functions_pattern = r"|".join(FUNCTIONS.keys())
     constants_pattern = r"|".join(CONSTANTS.keys())
     commands_pattern = r"|".join(COMMANDS.keys())
+    
     pattern = r"(?:{})|\d+\.?\d*|[a-zA-Z]+|\*\*|[,+\-*/^()]".format(
         "|".join([functions_pattern, constants_pattern, commands_pattern])
     )
@@ -17,6 +34,8 @@ def tokenize(expression):
     while i < len(tokens) - 1:
         a = tokens[i]
         b = tokens[i+1]
+        
+        # Insert implicit multiplication
         if a not in operators and b not in operators:
             tokens.insert(i+1, "*")
             i += 1
@@ -27,7 +46,7 @@ def tokenize(expression):
             # only insert * if the left token is NOT a function/command
             tokens.insert(i+1, "*")
             i += 1
+            
         i += 1
+        
     return tokens
-
-
